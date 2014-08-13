@@ -2,7 +2,7 @@
 // @name Form Autocomplete
 // @description Autocompletes forms.
 // @include *
-// @version 0.1.1
+// @version 1.0.0
 // @copyright Carlos Francisco Ragout
 // ==/UserScript==
 
@@ -15,6 +15,12 @@ var c_password = 'Pi3141592!';
 var c_birthdate = '01/01/1968';
 var c_dni = '23345564';
 var c_textarea = 'autocompleted information';
+
+var userDefinedValues = null;
+var predefinedTextareaShowing = false;
+
+var ignoredElements = null;
+var ignoreTextareaShowing = false;
 
 function fireInputEvent(el) {
 // Fire input event. Input event is used by angular to know when an input element has changed.
@@ -113,6 +119,10 @@ function guessInputRealType(inputElement) {
 function completeInputElement(inputElement) {
 	var inputRequired = inputElement.getAttribute('required') || inputElement.getAttribute('aria-required') || inputElement.getAttribute('ng-required');
 
+	if  ((!empty(ignoredElements)) && (ignoredElements[inputElement.id] != null)) {
+		return;
+	}
+
 	if (inputElement.class == 'fa_ignore-element') {
 		return;
 	}
@@ -125,6 +135,11 @@ function completeInputElement(inputElement) {
 	var onlyEmpty = document.getElementById('fa_empty-checkbox').checked;
 	var isCheckboxOrRadio = inputElement.type == 'checkbox' || inputElement.type == 'radio';
 	if ((!empty(inputElement.value)) && (onlyEmpty) && (!isCheckboxOrRadio)) {
+		return;
+	}
+
+	if ((!empty(userDefinedValues)) && (userDefinedValues[inputElement.id] != null)) {
+		inputElement.value = userDefinedValues[inputElement.id];
 		return;
 	}
 
@@ -199,8 +214,6 @@ function completeFormElement(formElement) {
 };
 
 function completeFormElements(form) {
-	// var form = document.getElementsByTagName('form')[formIndex];
-console.log(form);
 	for (var i = 0; i < form.elements.length; i++) {
 		completeFormElement(form.elements[i]);
 	}
@@ -302,7 +315,6 @@ function populateFormSelect(selectList) {
 	}
 };
 
-
 function initFormAutocomplete() {
 	var completeButton = document.createElement('button');
 	var resetButton = document.createElement('button');
@@ -323,11 +335,17 @@ function initFormAutocomplete() {
 	var optionsContainer = document.createElement('div');
 	var containerBar = document.createElement('div');
 
+	var userDefinedDataTextarea = document.createElement('textarea');
+	var userDefinedDataTextareaToggleButton = document.createElement('button');
+
+	var ignoreTextarea = document.createElement('textarea');
+	var ignoreTextareaToggleButton = document.createElement('button');
 
 	//  CSS And attribute values.
 	var buttonCss = 'margin-left:10px;font-family:calibri;color:black;line-height:100%;padding:2px;height:23px;min-width:initial;width:initial;font-size:12px;';
+	var textareaCss = 'font-family:calibri;color:#666;width: 430px;height: 500px;position: absolute;margin-top: 5px;left: 0px;display:none;background-color:rgb(39,40,34)';
 
-	container.setAttribute('style', 'margin-top:-35px;color: white;height: 30px;width: 100%;border-bottom-style: solid;border-bottom-width: 1px;border-color: red;text-align: left;font-family: Calibri;font-size: 12pt;padding-top: 5px;position: absolute;z-index: 999999999999;background-color: black;');
+	container.setAttribute('style', 'margin-top:-35px;color: white;height: 30px;width: 100%;border-bottom-style: solid;border-bottom-width: 1px;border-color: red;text-align: left;font-family: Calibri;font-size: 12pt;padding-top: 5px;position: absolute;z-index: 999999999999;background-color:rgb(39,40,34);');
 	container.id = 'fa_container-div';
 	containerBar.setAttribute('style', 'background-color: red;cursor:pointer;height:15px;');
 	optionsContainer.setAttribute('style', 'padding-left: 10px;');
@@ -380,6 +398,22 @@ function initFormAutocomplete() {
 	refreshFormSelect.appendChild(document.createTextNode('Refresh list'));
 	refreshFormSelect.setAttribute('style', buttonCss);
 
+	userDefinedDataTextarea.id = 'fa_user-defined-data';
+	userDefinedDataTextarea.class = 'fa_ignore-element';
+	userDefinedDataTextarea.setAttribute('style', textareaCss);
+	userDefinedDataTextarea.placeholder = 'JSON: key is element id and value is element value.';
+
+	userDefinedDataTextareaToggleButton.appendChild(document.createTextNode('Predefined data'));
+	userDefinedDataTextareaToggleButton.setAttribute('style', 'margin-left: 10px;font-family: calibri;color: black;line-height: 100%;padding: 2px;height: 23px;min-width: initial;width: initial;font-size: 12px;position:absolute')
+
+	ignoreTextarea.id = 'fa_ignore-list';
+	ignoreTextarea.class = 'fa_ignore-element';
+	ignoreTextarea.setAttribute('style', textareaCss);
+	ignoreTextarea.placeholder = 'JSON: key is element id. Value is ignored';
+
+	ignoreTextareaToggleButton.appendChild(document.createTextNode('Ignored elements'));
+	ignoreTextareaToggleButton.setAttribute('style', 'margin-left: 10px;font-family: calibri;color: black;line-height: 100%;padding: 2px;height: 23px;min-width: initial;width: initial;font-size: 12px;position:absolute;margin-left: 110px;')
+
 	populateFormSelect(formSelect);
 	formSelect.id = 'fa_forms-select';
 	formSelect.class = 'fa_ignore-element';
@@ -420,9 +454,87 @@ function initFormAutocomplete() {
 		if (document.getElementById('fa_hide-checkbox').checked) {
 			container.style.marginTop = '-35px';
 			containerBar.style.height = '15px';
+			predefinedTextareaShowing = false;
+			userDefinedDataTextarea.style.display = 'none';
+			ignoreTextareaShowing = false;
+			ignoreTextarea.style.display = 'none';
 		}
 
 	}, true);
+
+	userDefinedDataTextarea.addEventListener('change', function() {
+
+		try {
+			var newValue = document.getElementById('fa_user-defined-data').value || null;
+			userDefinedValues = JSON.parse(newValue);
+
+			if (newValue == null) {
+				delete localStorage.userDefinedValues;
+			} else {
+				localStorage.userDefinedValues = newValue;
+			}
+		}
+		catch(error) {
+			alert("Not a valid JSON. Check console for more details");
+			console.log("JSON is not valid", error);
+		}
+
+	}, true);
+
+	userDefinedDataTextareaToggleButton.addEventListener('click', function() {
+
+		if (predefinedTextareaShowing) {
+			userDefinedDataTextarea.style.display = 'none';
+		} else {
+
+			if (ignoreTextareaShowing) {
+				ignoreTextarea.style.display = 'none';
+				ignoreTextareaShowing = false;
+			}
+
+			userDefinedDataTextarea.style.display = 'block';
+		}
+
+		predefinedTextareaShowing = !predefinedTextareaShowing;
+
+	});
+
+	ignoreTextarea.addEventListener('change', function() {
+
+		try {
+			var newValue = document.getElementById('fa_ignore-list').value || null;
+			ignoredElements = JSON.parse(newValue);
+
+			if (newValue == null) {
+				delete localStorage.ignoredElements;
+			} else {
+				localStorage.ignoredElements = newValue;
+			}
+		}
+		catch(error) {
+			alert("Not a valid JSON. Check console for more details");
+			console.log("JSON is not valid", error);
+		}
+
+	}, true);
+
+	ignoreTextareaToggleButton.addEventListener('click', function() {
+
+		if (ignoreTextareaShowing) {
+			ignoreTextarea.style.display = 'none';
+		} else {
+
+			if (predefinedTextareaShowing) {
+				userDefinedDataTextarea.style.display = 'none';
+				predefinedTextareaShowing = false;
+			}
+
+			ignoreTextarea.style.display = 'block';
+		}
+
+		ignoreTextareaShowing = !ignoreTextareaShowing;
+
+	});
 
 	containerBar.addEventListener('click', function() {
 
@@ -445,11 +557,23 @@ function initFormAutocomplete() {
 	optionsContainer.appendChild(formSelect);
 	// Refresh button is temporarily disabled...
 	// optionsContainer.appendChild(refreshFormSelect);
-	optionsContainer.appendChild(textarea);
+	optionsContainer.appendChild(userDefinedDataTextareaToggleButton);
+	optionsContainer.appendChild(ignoreTextareaToggleButton);
+	optionsContainer.appendChild(userDefinedDataTextarea);
+	optionsContainer.appendChild(ignoreTextarea);
 	container.appendChild(optionsContainer);
 	container.appendChild(containerBar);
 
 	document.body.insertBefore(container, document.body.firstChild);
+
+	// Init
+	var predefinedValues = localStorage.userDefinedValues || null;
+	userDefinedValues = JSON.parse(predefinedValues);
+	document.getElementById('fa_user-defined-data').value = predefinedValues;
+
+	var predefinedIgnoredElements = localStorage.ignoredElements || null;
+	ignoredElements = JSON.parse(predefinedIgnoredElements);
+	document.getElementById('fa_ignore-list').value = predefinedIgnoredElements;
 };
 
 
