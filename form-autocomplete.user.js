@@ -323,9 +323,10 @@ function initFormAutocomplete() {
 	var optionsContainer = document.createElement('div');
 	var containerBar = document.createElement('div');
 
-	var buttonCss = 'margin-left:10px;font-family:calibri;color:black;line-height:100%;padding:2px;height:23px;min-width:initial;width:initial;font-size:12px;';
 
 	//  CSS And attribute values.
+	var buttonCss = 'margin-left:10px;font-family:calibri;color:black;line-height:100%;padding:2px;height:23px;min-width:initial;width:initial;font-size:12px;';
+
 	container.setAttribute('style', 'margin-top:-35px;color: white;height: 30px;width: 100%;border-bottom-style: solid;border-bottom-width: 1px;border-color: red;text-align: left;font-family: Calibri;font-size: 12pt;padding-top: 5px;position: absolute;z-index: 999999999999;background-color: black;');
 	container.id = 'fa_container-div';
 	containerBar.setAttribute('style', 'background-color: red;cursor:pointer;height:15px;');
@@ -436,19 +437,19 @@ function initFormAutocomplete() {
 
 	//  Dom
 	optionsContainer.appendChild(completeButton);
-	// Reset button is temporarily disabled...
-	//optionsContainer.appendChild(resetButton);
+	optionsContainer.appendChild(resetButton);
 	optionsContainer.appendChild(requiredLabel);
 	optionsContainer.appendChild(emptyLabel);
 	optionsContainer.appendChild(toggleContainerLabel);
 	optionsContainer.appendChild(ignoreSelectLabel);
 	optionsContainer.appendChild(formSelect);
-	optionsContainer.appendChild(refreshFormSelect);
+	// Refresh button is temporarily disabled...
+	// optionsContainer.appendChild(refreshFormSelect);
+	optionsContainer.appendChild(textarea);
 	container.appendChild(optionsContainer);
 	container.appendChild(containerBar);
 
 	document.body.insertBefore(container, document.body.firstChild);
-
 };
 
 
