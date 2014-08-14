@@ -273,6 +273,23 @@ function resetInputElement(inputElement) {
 	}
 };
 
+function getInputElementsJSON() {
+	var inputs = document.getElementsByTagName('input');
+	var eg = "{\n";
+	for (var i = 0; i < inputs.length; i++) {
+		if (!empty(inputs[i].id)) {
+			eg += '\t"' + inputs[i].id + '": "'+ inputs[i].type +'"';
+			if (i != inputs.length - 1) {
+				eg += ',\n';
+			} else {
+				eg += '\n';
+			}
+		}
+	}
+	eg += "}";
+	return eg;
+};
+
 function resetAllInputElements() {
 	var inputElements = document.getElementsByTagName('input');
 
@@ -319,6 +336,7 @@ function initFormAutocomplete() {
 	var completeButton = document.createElement('button');
 	var resetButton = document.createElement('button');
 	var refreshFormSelect = document.createElement('button');
+	var inputElementsJSONButton = document.createElement('button');
 	var requiredCheckbox = document.createElement('input');
 	var requiredLabel = document.createElement('label');
 	var emptyLabel = document.createElement('label');
@@ -394,6 +412,11 @@ function initFormAutocomplete() {
 
 	resetButton.appendChild(document.createTextNode('Reset'));
 	resetButton.setAttribute('style', buttonCss);
+
+	inputElementsJSONButton.appendChild(document.createTextNode('JSON'));
+	inputElementsJSONButton.setAttribute('style', buttonCss);
+	inputElementsJSONButton.style.marginLeft = '220px';
+	inputElementsJSONButton.style.position = 'absolute';
 
 	refreshFormSelect.appendChild(document.createTextNode('Refresh list'));
 	refreshFormSelect.setAttribute('style', buttonCss);
@@ -481,6 +504,13 @@ function initFormAutocomplete() {
 
 	}, true);
 
+	inputElementsJSONButton.addEventListener('click', function() {
+
+		console.log('Input elements:\n', getInputElementsJSON());
+		alert('Check the console to see a list of the input elements found');
+
+	});
+
 	userDefinedDataTextareaToggleButton.addEventListener('click', function() {
 
 		if (predefinedTextareaShowing) {
@@ -559,6 +589,7 @@ function initFormAutocomplete() {
 	// optionsContainer.appendChild(refreshFormSelect);
 	optionsContainer.appendChild(userDefinedDataTextareaToggleButton);
 	optionsContainer.appendChild(ignoreTextareaToggleButton);
+	optionsContainer.appendChild(inputElementsJSONButton);
 	optionsContainer.appendChild(userDefinedDataTextarea);
 	optionsContainer.appendChild(ignoreTextarea);
 	container.appendChild(optionsContainer);
