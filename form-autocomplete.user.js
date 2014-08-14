@@ -8,7 +8,7 @@
 
 var c_email = 'auto@complet.ed';
 var c_tel = '5555555555';
-var c_zip = '66666'
+var c_zip = '71666'
 var c_number = '7777';
 var c_text = 'autocompleted';
 var c_password = 'Pi3141592!';
@@ -116,6 +116,19 @@ function guessInputRealType(inputElement) {
 
 };
 
+function getElementPredefinedValue(element) {
+	var id = element.id || element.name;
+	if ((!empty(userDefinedValues)) && (userDefinedValues[id] != null)) {
+		return userDefinedValues[id];
+	}
+
+	return null;
+};
+
+function elementIsRadioOrCheckbox(element) {
+	return ( (element.tagName.toLowerCase() == 'input') && ((element.type == 'checkbox') || (element.type == 'radio')) )
+};
+
 function completeInputElement(inputElement) {
 	var inputRequired = inputElement.getAttribute('required') || inputElement.getAttribute('aria-required') || inputElement.getAttribute('ng-required');
 
@@ -133,56 +146,48 @@ function completeInputElement(inputElement) {
 	}
 
 	var onlyEmpty = document.getElementById('fa_empty-checkbox').checked;
-	var isCheckboxOrRadio = inputElement.type == 'checkbox' || inputElement.type == 'radio';
+	var isCheckboxOrRadio = elementIsRadioOrCheckbox(inputElement);
 	if ((!empty(inputElement.value)) && (onlyEmpty) && (!isCheckboxOrRadio)) {
 		return;
 	}
 
-	// REFACTOR!!
-	if ((!empty(userDefinedValues)) && (userDefinedValues[inputElement.id] != null)) {
-
-		if ((inputElement.type == 'radio') || ((inputElement.type == 'checkbox'))) {
-
-			if ((!inputElement.checked) && (userDefinedValues[inputElement.id] == true)) {
-				simulateClick(inputElement);
-			} else if ((inputElement.checked) && (userDefinedValues[inputElement.id] == false)) {
-				simulateClick(inputElement);
-			}
-
-		} else {
-			inputElement.value = userDefinedValues[inputElement.id];
-		}
-
-		simulateBlur(inputElement);
-		return;
-	}
-
-
+	var predefinedValue = getElementPredefinedValue(inputElement);
 	switch(inputElement.type) {
 		case 'text':
-			guessInputRealType(inputElement);
+			if (predefinedValue == null) {
+				guessInputRealType(inputElement);
+			} else {
+				inputElement.value = predefinedValue;
+			}
 			fireInputEvent(inputElement);
 		break;
 		case 'password':
-			inputElement.value = c_password;
+			inputElement.value = predefinedValue || c_password;
 			fireInputEvent(inputElement);
 		break;
 		case 'email':
-			inputElement.value = c_email;
+			inputElement.value = predefinedValue || c_email;
 			fireInputEvent(inputElement);
 		break;
 		case 'tel':
-			inputElement.value = c_tel;
+			inputElement.value = predefinedValue || c_tel;
 			fireInputEvent(inputElement);
 		break;
 		case 'radio':
-			if (!inputElement.checked){
-
+			if (predefinedValue == null){
+				simulateClick(inputElement);
+			} else if ((!inputElement.checked) && (predefinedValue == true)) {
+				simulateClick(inputElement);
+			} else if ((inputElement.checked) && (predefinedValue == false)) {
 				simulateClick(inputElement);
 			}
 		break;
 		case 'checkbox':
-			if (!inputElement.checked) {
+			if (predefinedValue == null){
+				simulateClick(inputElement);
+			} else if ((!inputElement.checked) && (predefinedValue == true)) {
+				simulateClick(inputElement);
+			} else if ((inputElement.checked) && (predefinedValue == false)) {
 				simulateClick(inputElement);
 			}
 		break;
@@ -195,6 +200,12 @@ function completeSelectElement(selectElement) {
 	var ignoreSelect = document.getElementById('fa_ignore-select-checkbox').checked;
 
 	if ((selectElement.class == 'fa_ignore-element') || (ignoreSelect)) {
+		return;
+	}
+
+	var predefinedValue = getElementPredefinedValue(selectElement);
+	if ((!empty(predefinedValue)) && (selectElement.children[predefinedValue] != null)) {
+		selectElement.children[predefinedValue].selected = true;
 		return;
 	}
 
@@ -279,7 +290,7 @@ function resetInputElement(inputElement) {
 		return;
 	}
 
-	if ((inputElement.type == 'checkbox') || (inputElement.type == 'radio')) {
+	if (elementIsRadioOrCheckbox(inputElement)) {
 		if (inputElement.checked) {
 			simulateClick(inputElement);
 		}
@@ -289,6 +300,7 @@ function resetInputElement(inputElement) {
 };
 
 function getInputElementsJSON() {
+// Returns a JSON like string of every input element. Key is input id, value is input type.
 	var inputs = document.getElementsByTagName('input');
 	var eg = "{\n";
 	for (var i = 0; i < inputs.length; i++) {
@@ -439,7 +451,7 @@ function initFormAutocomplete() {
 	userDefinedDataTextarea.id = 'fa_user-defined-data';
 	userDefinedDataTextarea.class = 'fa_ignore-element';
 	userDefinedDataTextarea.setAttribute('style', textareaCss);
-	userDefinedDataTextarea.placeholder = 'JSON: key is element id and value is element value.\n{ "elementID" : "some value" }';
+	userDefinedDataTextarea.placeholder = 'JSON: key is element id or name and value is element value.\n{ "elementID" : "some value" }';
 
 	userDefinedDataTextareaToggleButton.appendChild(document.createTextNode('Predefined data'));
 	userDefinedDataTextareaToggleButton.setAttribute('style', 'margin-left: 10px;font-family: calibri;color: black;line-height: 100%;padding: 2px;height: 23px;min-width: initial;width: initial;font-size: 12px;position:absolute')
@@ -447,7 +459,7 @@ function initFormAutocomplete() {
 	ignoreTextarea.id = 'fa_ignore-list';
 	ignoreTextarea.class = 'fa_ignore-element';
 	ignoreTextarea.setAttribute('style', textareaCss);
-	ignoreTextarea.placeholder = 'JSON: key is element id. Value is ignored.\n{ "elementID" : "ignored" }';
+	ignoreTextarea.placeholder = 'JSON: key is element id or name. Value is ignored.\n{ "elementID" : "ignored" }';
 
 	ignoreTextareaToggleButton.appendChild(document.createTextNode('Ignored elements'));
 	ignoreTextareaToggleButton.setAttribute('style', 'margin-left: 10px;font-family: calibri;color: black;line-height: 100%;padding: 2px;height: 23px;min-width: initial;width: initial;font-size: 12px;position:absolute;margin-left: 110px;')
@@ -487,7 +499,6 @@ function initFormAutocomplete() {
 	}, true);
 
 	toggleContainerCheckbox.addEventListener('change', function() {
-
 
 		if (document.getElementById('fa_hide-checkbox').checked) {
 			container.style.marginTop = '-35px';
