@@ -138,8 +138,22 @@ function completeInputElement(inputElement) {
 		return;
 	}
 
+	// REFACTOR!!
 	if ((!empty(userDefinedValues)) && (userDefinedValues[inputElement.id] != null)) {
-		inputElement.value = userDefinedValues[inputElement.id];
+
+		if ((inputElement.type == 'radio') || ((inputElement.type == 'checkbox'))) {
+
+			if ((!inputElement.checked) && (userDefinedValues[inputElement.id] == true)) {
+				simulateClick(inputElement);
+			} else if ((inputElement.checked) && (userDefinedValues[inputElement.id] == false)) {
+				simulateClick(inputElement);
+			}
+
+		} else {
+			inputElement.value = userDefinedValues[inputElement.id];
+		}
+
+		simulateBlur(inputElement);
 		return;
 	}
 
@@ -163,6 +177,7 @@ function completeInputElement(inputElement) {
 		break;
 		case 'radio':
 			if (!inputElement.checked){
+
 				simulateClick(inputElement);
 			}
 		break;
@@ -424,7 +439,7 @@ function initFormAutocomplete() {
 	userDefinedDataTextarea.id = 'fa_user-defined-data';
 	userDefinedDataTextarea.class = 'fa_ignore-element';
 	userDefinedDataTextarea.setAttribute('style', textareaCss);
-	userDefinedDataTextarea.placeholder = 'JSON: key is element id and value is element value.';
+	userDefinedDataTextarea.placeholder = 'JSON: key is element id and value is element value.\n{ "elementID" : "some value" }';
 
 	userDefinedDataTextareaToggleButton.appendChild(document.createTextNode('Predefined data'));
 	userDefinedDataTextareaToggleButton.setAttribute('style', 'margin-left: 10px;font-family: calibri;color: black;line-height: 100%;padding: 2px;height: 23px;min-width: initial;width: initial;font-size: 12px;position:absolute')
@@ -432,7 +447,7 @@ function initFormAutocomplete() {
 	ignoreTextarea.id = 'fa_ignore-list';
 	ignoreTextarea.class = 'fa_ignore-element';
 	ignoreTextarea.setAttribute('style', textareaCss);
-	ignoreTextarea.placeholder = 'JSON: key is element id. Value is ignored';
+	ignoreTextarea.placeholder = 'JSON: key is element id. Value is ignored.\n{ "elementID" : "ignored" }';
 
 	ignoreTextareaToggleButton.appendChild(document.createTextNode('Ignored elements'));
 	ignoreTextareaToggleButton.setAttribute('style', 'margin-left: 10px;font-family: calibri;color: black;line-height: 100%;padding: 2px;height: 23px;min-width: initial;width: initial;font-size: 12px;position:absolute;margin-left: 110px;')
