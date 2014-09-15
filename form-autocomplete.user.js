@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Form Autocomplete
 // @description Autocompletes forms.
-// @include *
+// @include http://127.0.0.1:9000/
 // @version 1.0.0
 // @copyright Carlos Francisco Ragout
 // ==/UserScript==
@@ -331,9 +331,14 @@ function resetAllElements() {
 };
 
 function completeAllElements() {
-	var forms = document.getElementsByTagName('form');
-	for (var i = 0; i < forms.length; i++) {
-		completeFormElements(forms[i]);
+	var elements = [];
+	elements.push(document.getElementsByTagName('input'));
+	elements.push(document.getElementsByTagName('select'));
+	elements.push(document.getElementsByTagName('textarea'));
+	for (var i = 0; i < elements.length; i++) {
+		for (var j = 0; j < elements[i].length; j++) {
+			completeFormElement(elements[i][j]);
+		}
 	}
 };
 
